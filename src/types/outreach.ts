@@ -10,6 +10,10 @@ export interface PersonProfile {
   summary: string;
   linkedinUrl?: string;
   profileImage?: string;
+  location?: string;
+  languages?: string[];
+  certifications?: string[];
+  recommendations?: string;
   recentActivity?: string[];
 }
 

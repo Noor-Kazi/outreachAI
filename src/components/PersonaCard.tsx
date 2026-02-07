@@ -50,9 +50,9 @@ export function PersonaCard({ profile }: PersonaCardProps) {
           {/* Profile Header */}
           <div className="flex items-start gap-4">
             <Avatar className="h-16 w-16 border-2 border-primary/20">
-              <AvatarImage src={profile.profileImage} alt={profile.name} />
+              <AvatarImage src={profile.profileImage} alt={profile.name} className="object-cover" />
               <AvatarFallback className="bg-gradient-primary text-primary-foreground text-lg font-semibold">
-                {profile.name.split(' ').map(n => n[0]).join('')}
+                {profile.name.split(' ').slice(0, 2).map(n => n[0]).join('')}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
@@ -90,25 +90,74 @@ export function PersonaCard({ profile }: PersonaCardProps) {
             </div>
           </div>
 
-          {/* Industry */}
-          <div className="space-y-1.5">
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <Tag className="h-3 w-3" />
-              Industry
-            </span>
-            <Badge variant="outline" className="font-normal">
-              {profile.industry}
-            </Badge>
+          {/* Industry & Location */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1.5">
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <Tag className="h-3 w-3" />
+                Industry
+              </span>
+              <Badge variant="outline" className="font-normal">
+                {profile.industry}
+              </Badge>
+            </div>
+            {profile.location && (
+              <div className="space-y-1.5">
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Building2 className="h-3 w-3" />
+                  Location
+                </span>
+                <p className="text-sm font-medium truncate">{profile.location}</p>
+              </div>
+            )}
           </div>
 
-          {/* Interests */}
+          {/* Languages */}
+          {profile.languages && profile.languages.length > 0 && (
+            <div className="space-y-1.5">
+              <span className="text-xs text-muted-foreground">Languages</span>
+              <div className="flex flex-wrap gap-1.5">
+                {profile.languages.map((lang, i) => (
+                  <Badge key={i} variant="outline" className="font-normal text-xs bg-muted/50">
+                    {lang}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Certifications */}
+          {profile.certifications && profile.certifications.length > 0 && (
+            <div className="space-y-1.5">
+              <span className="text-xs text-muted-foreground">Certifications</span>
+              <div className="flex flex-wrap gap-1.5">
+                {profile.certifications.map((cert, i) => (
+                  <Badge key={i} variant="secondary" className="font-normal text-xs">
+                    {cert}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Recommendations */}
+          {profile.recommendations && (
+            <div className="space-y-1.5">
+              <span className="text-xs text-muted-foreground">Recommendations</span>
+              <p className="text-xs text-muted-foreground italic line-clamp-2">
+                "{profile.recommendations}"
+              </p>
+            </div>
+          )}
+
+          {/* Skills / Interests */}
           <div className="space-y-1.5">
-            <span className="text-xs text-muted-foreground">Interests & Topics</span>
+            <span className="text-xs text-muted-foreground">Skills & Interests</span>
             <div className="flex flex-wrap gap-1.5">
               {profile.interests.map((interest, i) => (
-                <Badge 
-                  key={i} 
-                  variant="secondary" 
+                <Badge
+                  key={i}
+                  variant="secondary"
                   className="font-normal text-xs"
                 >
                   {interest}

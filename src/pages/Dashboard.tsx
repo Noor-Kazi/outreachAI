@@ -11,9 +11,12 @@ import { HistorySidebar } from "@/components/HistorySidebar";
 import { PersonProfile, OutreachMessage, OutreachHistory } from "@/types/outreach";
 
 import { mockHistory } from "@/data/mockData";
-import { generateOutreach } from "@/services/ollamaService";
+import { generateOutreach, analyzeProfile, AnalyzedProfile } from "@/services/ollamaService";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { SenderProfileForm, SenderProfile } from "@/components/SenderProfileForm";
+import { AnalysisReviewModal } from "@/components/AnalysisReviewModal";
 
 const channelConfig = {
   email: { icon: <Mail className="h-4 w-4" />, name: "Email", color: "text-primary" },
@@ -29,15 +32,67 @@ const Dashboard = () => {
   const [selectedHistoryId, setSelectedHistoryId] = useState<string>();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
+  const [senderProfile, setSenderProfile] = useState<SenderProfile | null>(() => {
+    const saved = localStorage.getItem("outreach_sender_profile");
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [showOnboarding, setShowOnboarding] = useState(!senderProfile);
 
-  const handleGenerate = async (data: { linkedinUrl?: string; profileText?: string }) => {
+  // New state for 2-step flow
+  const [analyzedData, setAnalyzedData] = useState<AnalyzedProfile | null>(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [currentInputContext, setCurrentInputContext] = useState<string>("");
+  const [currentOtherUrl, setCurrentOtherUrl] = useState<string | undefined>();
+  const [currentPurpose, setCurrentPurpose] = useState<string>("general");
+
+  const handleSaveSenderProfile = (data: SenderProfile) => {
+    setSenderProfile(data);
+    localStorage.setItem("outreach_sender_profile", JSON.stringify(data));
+    setShowOnboarding(false);
+    toast.success("Profile saved!");
+  };
+
+  const handleAnalyze = async (data: {
+    linkedinUrl?: string;
+    profileText?: string;
+    otherSocialUrl?: string;
+    purpose: string;
+  }) => {
     setIsLoading(true);
+    const inputContext = data.profileText || data.linkedinUrl || "";
+    setCurrentInputContext(inputContext);
+    setCurrentOtherUrl(data.otherSocialUrl);
+    setCurrentPurpose(data.purpose);
 
     try {
-      const inputContext = data.profileText || data.linkedinUrl || "A professional in the tech industry";
+      console.log("Analyzing profile for:", inputContext);
+      const analysis = await analyzeProfile(inputContext, data.otherSocialUrl);
+      setAnalyzedData(analysis);
+      setShowReviewModal(true);
+      toast.success("Profile analyzed! Review details before generation.");
+    } catch (error) {
+      console.error("Analysis error:", error);
+      toast.error("Failed to analyze profile. Is Ollama running?");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      console.log("Generating outreach for:", inputContext);
-      const { profile, messages: generatedMessages } = await generateOutreach(inputContext);
+  const handleConfirmAndGenerate = async (finalData: { targetDetails: AnalyzedProfile; senderProfile: SenderProfile }) => {
+    setIsLoading(true);
+    // Update sender profile if changed
+    handleSaveSenderProfile(finalData.senderProfile);
+    setShowReviewModal(false);
+
+    try {
+      console.log("Generating outreach with confirmed details...");
+      const { profile, messages: generatedMessages } = await generateOutreach(
+        currentInputContext,
+        currentOtherUrl,
+        currentPurpose,
+        finalData.senderProfile,
+        finalData.targetDetails
+      );
 
       setCurrentProfile(profile);
       setMessages(generatedMessages);
@@ -54,9 +109,7 @@ const Dashboard = () => {
       toast.success("Outreach generated successfully!");
     } catch (error) {
       console.error("Generation error:", error);
-      toast.error("Failed to generate outreach. Is Ollama running locally?", {
-        description: "Make sure 'ollama serve' is running and you have pulled a model (e.g. 'ollama pull mistral')."
-      });
+      toast.error("Failed to generate outreach.");
     } finally {
       setIsLoading(false);
     }
@@ -82,6 +135,7 @@ const Dashboard = () => {
     setCurrentProfile(null);
     setMessages([]);
     setSelectedHistoryId(undefined);
+    setAnalyzedData(null);
   };
 
   const SidebarContent = (
@@ -140,6 +194,27 @@ const Dashboard = () => {
 
         {/* Content Area */}
         <div className="flex-1 overflow-auto p-4 md:p-6">
+          <Dialog open={showOnboarding} onOpenChange={setShowOnboarding}>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>Welcome to OutreachAI</DialogTitle>
+                <DialogDescription>
+                  Let's set up your profile first. This information will be used to personalize the messages you generate.
+                </DialogDescription>
+              </DialogHeader>
+              <SenderProfileForm onSave={handleSaveSenderProfile} initialData={senderProfile} />
+            </DialogContent>
+          </Dialog>
+
+          <AnalysisReviewModal
+            open={showReviewModal}
+            onOpenChange={setShowReviewModal}
+            analyzedData={analyzedData}
+            initialSenderProfile={senderProfile}
+            onConfirm={handleConfirmAndGenerate}
+            isGenerating={isLoading}
+          />
+
           <AnimatePresence mode="wait">
             {!currentProfile ? (
               <motion.div
@@ -172,7 +247,7 @@ const Dashboard = () => {
                   </p>
                 </div>
 
-                <ProfileInput onGenerate={handleGenerate} isLoading={isLoading} />
+                <ProfileInput onAnalyze={handleAnalyze} isLoading={isLoading} />
 
                 {/* Features Preview */}
                 <div className="mt-8 grid grid-cols-3 gap-4 text-center">
