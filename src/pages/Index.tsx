@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Zap, Target, MessageSquare, Shield, ArrowRight, Sparkles, Mail, Linkedin, MessageCircle } from "lucide-react";
+import { Zap, Target, MessageSquare, Shield, ArrowRight, Sparkles, Mail, Linkedin, MessageCircle, Star, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const features = [
@@ -22,12 +23,51 @@ const features = [
 ];
 
 const channels = [
-  { icon: <Mail className="h-8 w-8" />, name: "Email", desc: "Professional cold emails" },
-  { icon: <Linkedin className="h-8 w-8" />, name: "LinkedIn", desc: "Connection requests & DMs" },
-  { icon: <MessageCircle className="h-8 w-8" />, name: "WhatsApp/SMS", desc: "Short personalized messages" },
+  { icon: <Mail className="h-8 w-8" />, name: "Email", desc: "Professional cold emails", id: "email" },
+  { icon: <Linkedin className="h-8 w-8" />, name: "LinkedIn", desc: "Connection requests & DMs", id: "linkedin" },
+  { icon: <MessageCircle className="h-8 w-8" />, name: "WhatsApp", desc: "Short personalized messages", id: "whatsapp" },
+];
+
+const samples = {
+  email: {
+    subject: "Scaling outreach at {Company}...",
+    body: "Hi {Name},\n\nI noticed you're leading sales initiatives at {Company}. Your recent expansion into the {Region} market caught my eye.\n\nWe help teams like yours automate personalization at scale without losing the human touch.\n\nWorth a quick chat?\n\nBest,\n[Your Name]"
+  },
+  linkedin: {
+    body: "Hi {Name}, saw your post about AI in sales. I'm also exploring how local LLMs can improve data privacy in outreach.\n\nWould love to connect and share insights!\n\nBest,\n[Your Name]"
+  },
+  whatsapp: {
+    body: "Hey {Name}, quick question - are you still hiring for the SDR role? I know a great candidate who specializes in {Field}."
+  }
+};
+
+const reviews = [
+  {
+    name: "Sarah Jenkins",
+    role: "SDR Manager",
+    company: "TechFlow",
+    content: "This tool saved me hours of researching prospects. The personalization is unmatched.",
+    rating: 5
+  },
+  {
+    name: "Michael Chen",
+    role: "Account Executive",
+    company: "ScaleUp",
+    content: "Finally, an outreach tool that doesn't sound like a robot. My response rates doubled.",
+    rating: 5
+  },
+  {
+    name: "Emily Ross",
+    role: "Founder",
+    company: "StartLine",
+    content: "The privacy-first approach is exactly what we needed. Runs locally, super fast.",
+    rating: 5
+  }
 ];
 
 const Index = () => {
+  const [activeTab, setActiveTab] = useState("email");
+
   return (
     <div className="min-h-screen bg-background overflow-hidden">
       {/* Navigation */}
@@ -88,7 +128,7 @@ const Index = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10"
           >
-            Generate deeply personalized outreach messages across Email, LinkedIn, and WhatsApp. 
+            Generate deeply personalized outreach messages across Email, LinkedIn, and WhatsApp.
             Powered by local LLM for complete privacy and control.
           </motion.p>
 
@@ -104,9 +144,6 @@ const Index = () => {
                 <Zap className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="h-12 px-8 text-base">
-              Watch Demo
-            </Button>
           </motion.div>
         </div>
       </section>
@@ -124,23 +161,69 @@ const Index = () => {
             <p className="text-muted-foreground">One profile, multiple personalized messages</p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {channels.map((channel, i) => (
-              <motion.div
-                key={channel.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="bg-card rounded-2xl p-6 border border-border/50 text-center shadow-md hover:shadow-lg transition-shadow"
-              >
-                <div className="h-16 w-16 rounded-2xl bg-gradient-primary flex items-center justify-center mx-auto mb-4 text-primary-foreground">
-                  {channel.icon}
+          {/* Sample Messages UI */}
+          <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <div className="flex flex-col gap-4">
+                {channels.map((channel) => (
+                  <button
+                    key={channel.id}
+                    onClick={() => setActiveTab(channel.id)}
+                    className={`flex items-center gap-4 p-4 rounded-2xl border transition-all text-left ${activeTab === channel.id
+                        ? "bg-card border-primary shadow-lg scale-105"
+                        : "bg-transparent border-transparent hover:bg-card/50"
+                      }`}
+                  >
+                    <div className={`p-3 rounded-xl ${activeTab === channel.id ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                      {channel.icon}
+                    </div>
+                    <div>
+                      <h3 className={`font-semibold ${activeTab === channel.id ? "text-foreground" : "text-muted-foreground"}`}>
+                        {channel.name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">{channel.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="bg-card border border-border/50 rounded-3xl p-6 shadow-xl relative overflow-hidden min-h-[300px]"
+            >
+              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-primary" />
+              <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground border-b border-border/50 pb-4">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-red-400/20" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-400/20" />
+                  <div className="w-3 h-3 rounded-full bg-green-400/20" />
                 </div>
-                <h3 className="font-semibold text-lg mb-2">{channel.name}</h3>
-                <p className="text-sm text-muted-foreground">{channel.desc}</p>
-              </motion.div>
-            ))}
+                <span className="ml-2">Generated Message Preview</span>
+              </div>
+
+              <div className="font-mono text-sm leading-relaxed whitespace-pre-wrap">
+                {activeTab === 'email' && (
+                  <>
+                    <span className="text-muted-foreground">Subject: </span>
+                    <span className="text-foreground font-medium">{samples.email.subject}</span>
+                    <br /><br />
+                  </>
+                )}
+                <span className="text-foreground/90">
+                  {
+                    // @ts-ignore
+                    samples[activeTab as keyof typeof samples].body
+                  }
+                </span>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -175,6 +258,50 @@ const Index = () => {
                 </div>
                 <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
                 <p className="text-muted-foreground">{feature.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Reviews Section */}
+      <section className="py-20 px-4 bg-muted/30">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-2xl sm:text-3xl font-bold mb-4">Loved by Sales Teams</h2>
+            <p className="text-muted-foreground">Join thousands of professionals scaling their outreach</p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {reviews.map((review, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="bg-card p-6 rounded-2xl border border-border/50 shadow-sm"
+              >
+                <div className="flex gap-1 mb-4">
+                  {[...Array(review.rating)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-primary text-primary" />
+                  ))}
+                </div>
+                <p className="mb-6 text-foreground/90 leading-relaxed">"{review.content}"</p>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-gradient-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
+                    {review.name[0]}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-sm">{review.name}</div>
+                    <div className="text-xs text-muted-foreground">{review.role} at {review.company}</div>
+                  </div>
+                </div>
               </motion.div>
             ))}
           </div>

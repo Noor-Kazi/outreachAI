@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Briefcase, Building2, TrendingUp, MessageSquare, Tag, Sparkles } from "lucide-react";
+import { Briefcase, Building2, TrendingUp, MessageSquare, Tag, Sparkles, Lightbulb } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -126,6 +126,41 @@ export function PersonaCard({ profile }: PersonaCardProps) {
             </div>
           )}
 
+          {/* Strategy & Psychology */}
+          {(profile.psychologicalProfile || profile.recommendedStrategy || (profile.personalHooks && profile.personalHooks.length > 0)) && (
+            <div className="space-y-3 pt-2 border-t border-border/50">
+              <div className="flex items-center gap-2 text-sm font-semibold text-accent">
+                <Lightbulb className="h-4 w-4" />
+                Strategy & Psychology
+              </div>
+
+              {profile.psychologicalProfile && (
+                <div className="space-y-1">
+                  <span className="text-xs text-muted-foreground">Archetype</span>
+                  <p className="text-sm font-medium">{profile.psychologicalProfile}</p>
+                </div>
+              )}
+
+              {profile.recommendedStrategy && (
+                <div className="space-y-1">
+                  <span className="text-xs text-muted-foreground">Approach</span>
+                  <p className="text-sm italic text-muted-foreground">"{profile.recommendedStrategy}"</p>
+                </div>
+              )}
+
+              {profile.personalHooks && profile.personalHooks.length > 0 && (
+                <div className="space-y-1.5">
+                  <span className="text-xs text-muted-foreground">Personal Hooks</span>
+                  <ul className="text-xs list-disc pl-4 space-y-1 text-muted-foreground">
+                    {profile.personalHooks.map((hook, i) => (
+                      <li key={i}>{hook}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Certifications */}
           {profile.certifications && profile.certifications.length > 0 && (
             <div className="space-y-1.5">
@@ -173,8 +208,25 @@ export function PersonaCard({ profile }: PersonaCardProps) {
               {profile.summary}
             </p>
           </div>
+
+          {/* Similar Profiles */}
+          {profile.similarProfiles && profile.similarProfiles.length > 0 && (
+            <div className="space-y-1.5 pt-2 border-t border-border/50">
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <Sparkles className="h-3 w-3 text-primary" />
+                Similar Profiles
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {profile.similarProfiles.map((name, i) => (
+                  <Badge key={i} variant="outline" className="text-xs border-primary/20 bg-primary/5 text-primary">
+                    {name}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
-    </motion.div>
+    </motion.div >
   );
 }

@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { User, Briefcase, Building2, Lightbulb } from "lucide-react";
+import { User, Briefcase, Building2, Lightbulb, PenTool, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { analyzeWritingStyle } from "@/services/ollamaService";
+import { toast } from "sonner";
 
 export interface SenderProfile {
     name: string;
@@ -12,6 +14,7 @@ export interface SenderProfile {
     role: string; // or Degree/Major
     company: string; // or University
     skills: string;
+    writingStyle?: string; // Analyzed style
 }
 
 interface SenderProfileFormProps {
@@ -27,8 +30,11 @@ export function SenderProfileForm({ initialData, onSave }: SenderProfileFormProp
             role: "",
             company: "",
             skills: "",
+            writingStyle: ""
         }
     );
+    const [writingSample, setWritingSample] = useState("");
+    const [isAnalyzingStyle, setIsAnalyzingStyle] = useState(false);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -37,6 +43,20 @@ export function SenderProfileForm({ initialData, onSave }: SenderProfileFormProp
 
     const handleChange = (field: keyof SenderProfile, value: string) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
+    };
+
+    const handleAnalyzeStyle = async () => {
+        if (!writingSample.trim()) return;
+        setIsAnalyzingStyle(true);
+        try {
+            const style = await analyzeWritingStyle(writingSample);
+            setFormData(prev => ({ ...prev, writingStyle: style }));
+            toast.success("Writing style analyzed!");
+        } catch (error) {
+            toast.error("Failed to analyze style.");
+        } finally {
+            setIsAnalyzingStyle(false);
+        }
     };
 
     const isStudent = formData.status === "student";
@@ -49,7 +69,7 @@ export function SenderProfileForm({ initialData, onSave }: SenderProfileFormProp
                 <Label>I am a...</Label>
                 <RadioGroup
                     defaultValue={formData.status}
-                    onValueChange={(val) => handleChange("status", val)}
+                    onValueChange={(val) => handleChange("status", val as "student" | "professional")}
                     className="flex gap-4"
                 >
                     <div className="flex items-center space-x-2">
@@ -122,9 +142,55 @@ export function SenderProfileForm({ initialData, onSave }: SenderProfileFormProp
                         onChange={(e) => handleChange("skills", e.target.value)}
                     />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                    These details help the AI personalize the outreach and establish credibility.
-                </p>
+            </div>
+
+            {/* Voice Cloning Section */}
+            <div className="space-y-3 pt-2 border-t border-border/50">
+                <div className="flex items-center gap-2">
+                    <PenTool className="h-4 w-4 text-primary" />
+                    <Label className="font-semibold text-primary">Voice Cloning (Writing Style)</Label>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label className="text-xs">Paste a sample of your writing (email/post)</Label>
+                        <Textarea
+                            value={writingSample}
+                            onChange={(e) => setWritingSample(e.target.value)}
+                            placeholder="Paste a recent email or post here..."
+                            className="min-h-[80px] text-xs"
+                        />
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            onClick={handleAnalyzeStyle}
+                            disabled={!writingSample || isAnalyzingStyle}
+                            className="w-full h-8 text-xs"
+                        >
+                            {isAnalyzingStyle ? (
+                                <>
+                                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                                    Analyzing...
+                                </>
+                            ) : (
+                                <>
+                                    <Sparkles className="mr-2 h-3 w-3" />
+                                    Analyze Style
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="text-xs">Analyzed Style Instructions</Label>
+                        <Textarea
+                            value={formData.writingStyle || ""}
+                            onChange={(e) => handleChange("writingStyle", e.target.value)}
+                            placeholder="Style instructions will appear here..."
+                            className="min-h-[116px] text-xs bg-muted/30"
+                        />
+                    </div>
+                </div>
             </div>
 
             <div className="pt-2">

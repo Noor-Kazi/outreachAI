@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Copy, Check, Sparkles, RotateCcw } from "lucide-react";
+import { Copy, Check, Sparkles, RotateCcw, Mail } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,19 +11,29 @@ interface MessageCardProps {
   channelIcon: React.ReactNode;
   channelName: string;
   onRegenerate?: () => void;
+  recipientEmail?: string;
 }
 
-export function MessageCard({ message, channelIcon, channelName, onRegenerate }: MessageCardProps) {
+export function MessageCard({ message, channelIcon, channelName, onRegenerate, recipientEmail }: MessageCardProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
-    const textToCopy = message.subject 
+    const textToCopy = message.subject
       ? `Subject: ${message.subject}\n\n${message.content}`
       : message.content;
-    
+
     await navigator.clipboard.writeText(textToCopy);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleOpenEmail = () => {
+    if (!recipientEmail) {
+      // Fallback if no email is provided, just open mail client
+      window.location.href = `mailto:?subject=${encodeURIComponent(message.subject || "")}&body=${encodeURIComponent(message.content)}`;
+      return;
+    }
+    window.location.href = `mailto:${recipientEmail}?subject=${encodeURIComponent(message.subject || "")}&body=${encodeURIComponent(message.content)}`;
   };
 
   return (
@@ -40,19 +50,30 @@ export function MessageCard({ message, channelIcon, channelName, onRegenerate }:
               {channelName}
             </CardTitle>
             <div className="flex items-center gap-1">
+              {message.channel === 'email' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 gap-1 text-xs"
+                  onClick={handleOpenEmail}
+                >
+                  <Mail className="h-3.5 w-3.5" />
+                  Open Mail
+                </Button>
+              )}
               {onRegenerate && (
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="h-8 w-8"
                   onClick={onRegenerate}
                 >
                   <RotateCcw className="h-4 w-4" />
                 </Button>
               )}
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="h-8 w-8"
                 onClick={handleCopy}
               >
@@ -77,23 +98,23 @@ export function MessageCard({ message, channelIcon, channelName, onRegenerate }:
         <CardContent className="space-y-3">
           {message.subject && (
             <div className="space-y-1">
-              <span className="text-xs text-muted-foreground font-medium">Subject Line</span>
-              <p className="text-sm font-medium bg-muted/50 p-2 rounded-md">
+              <span className="text-sm text-muted-foreground font-medium">Subject Line</span>
+              <p className="text-base font-semibold bg-muted/50 p-3 rounded-md">
                 {message.subject}
               </p>
             </div>
           )}
-          
-          <div className="space-y-1">
-            <span className="text-xs text-muted-foreground font-medium">Message</span>
-            <div className="text-sm leading-relaxed whitespace-pre-wrap bg-muted/30 p-3 rounded-md border border-border/50">
+
+          <div className="space-y-2">
+            <span className="text-sm text-muted-foreground font-medium">Message</span>
+            <div className="text-base leading-7 whitespace-pre-wrap bg-muted/30 p-5 rounded-lg border border-border/50">
               {message.content}
             </div>
           </div>
 
-          <div className="pt-2 border-t border-border/50">
-            <span className="text-xs text-muted-foreground font-medium">Call to Action</span>
-            <p className="text-sm text-primary font-medium mt-1">
+          <div className="pt-3 border-t border-border/50">
+            <span className="text-sm text-muted-foreground font-medium">Call to Action</span>
+            <p className="text-base text-primary font-semibold mt-1">
               {message.cta}
             </p>
           </div>

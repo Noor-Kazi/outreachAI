@@ -27,13 +27,21 @@ export function ProfileInput({ onAnalyze, isLoading }: ProfileInputProps) {
 
   const handleAnalyze = () => {
     if (activeTab === "url" && linkedinUrl) {
-      onAnalyze({ linkedinUrl, otherSocialUrl, purpose });
+      let fullUrl = linkedinUrl.trim();
+      // If it's just a username (no slashes, no dots)
+      if (!fullUrl.includes(".") && !fullUrl.includes("/")) {
+        fullUrl = `https://www.linkedin.com/in/${fullUrl}`;
+      } else if (!fullUrl.startsWith("http")) {
+        // If it looks like a URL but missing protocol
+        fullUrl = `https://${fullUrl}`;
+      }
+      onAnalyze({ linkedinUrl: fullUrl, otherSocialUrl, purpose });
     } else if (activeTab === "text" && profileText) {
       onAnalyze({ profileText, otherSocialUrl, purpose });
     }
   };
 
-  const isValid = (activeTab === "url" && linkedinUrl.length > 10) ||
+  const isValid = (activeTab === "url" && linkedinUrl.length > 2) ||
     (activeTab === "text" && profileText.length > 20);
 
   return (
@@ -81,12 +89,14 @@ export function ProfileInput({ onAnalyze, isLoading }: ProfileInputProps) {
 
           <TabsContent value="url" className="space-y-4">
             <div className="space-y-2">
-              <Input
-                placeholder="https://linkedin.com/in/username"
-                value={linkedinUrl}
-                onChange={(e) => setLinkedinUrl(e.target.value)}
-                className="h-12 text-base"
-              />
+              <div className="relative flex items-center">
+                <Input
+                  placeholder="https://www.linkedin.com/in/username"
+                  value={linkedinUrl}
+                  onChange={(e) => setLinkedinUrl(e.target.value)}
+                  className="h-12 text-base"
+                />
+              </div>
               <Input
                 placeholder="Other Social Media URL (e.g. Twitter, Instagram, GitHub)"
                 value={otherSocialUrl}
@@ -94,7 +104,7 @@ export function ProfileInput({ onAnalyze, isLoading }: ProfileInputProps) {
                 className="h-12 text-base"
               />
               <p className="text-xs text-muted-foreground">
-                We'll analyze public profile data to personalize outreach
+                Enter the full LinkedIn profile URL. We'll analyze public profile data to personalize outreach
               </p>
             </div>
           </TabsContent>
